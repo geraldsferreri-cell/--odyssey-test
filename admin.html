@@ -152,17 +152,24 @@ td .id { font-family:monospace; color:var(--accent); font-size:.82rem; }
   window.refresh = async function() {
     try {
       var headers = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
-      var res = await fetch(URL + '?select=*&order=created_at.desc&limit=50', { headers: headers });
-      if (!res.ok) throw new Error(res.status);
-      var rows = await res.json();
 
-      var total = rows.length;
-      var mobile = rows.filter(function(r) { return r.device === 'mobile'; }).length;
-      var desktop = rows.filter(function(r) { return r.device === 'desktop'; }).length;
+      // Get total counts
+      var countRes = await fetch(URL + '?select=device', { headers: headers });
+      if (!countRes.ok) throw new Error('HTTP ' + countRes.status);
+      var allRows = await countRes.json();
+
+      var total = allRows.length;
+      var mobile = allRows.filter(function(r) { return r.device === 'mobile'; }).length;
+      var desktop = allRows.filter(function(r) { return r.device === 'desktop'; }).length;
 
       document.getElementById('totalCount').textContent = total;
       document.getElementById('mobileCount').textContent = mobile;
       document.getElementById('desktopCount').textContent = desktop;
+
+      // Get latest 50 for the table
+      var res = await fetch(URL + '?select=*&order=created_at.desc&limit=50', { headers: headers });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var rows = await res.json();
 
       var now = new Date();
       document.getElementById('lastUpdated').textContent =
@@ -174,7 +181,7 @@ td .id { font-family:monospace; color:var(--accent); font-size:.82rem; }
         return;
       }
 
-      var html = '<table><thead><tr><th>#</th><th>匿名 ID</th><th>设备</th><th>时间</th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>#</th><th>设备</th><th>时间</th></tr></thead><tbody>';
       rows.forEach(function(r, i) {
         var time = new Date(r.created_at).toLocaleString('zh-CN', {
           month: '2-digit', day: '2-digit',
@@ -184,7 +191,6 @@ td .id { font-family:monospace; color:var(--accent); font-size:.82rem; }
         var deviceLabel = r.device === 'mobile' ? '📱 手机' : '💻 电脑';
         html += '<tr>';
         html += '<td>' + (i + 1) + '</td>';
-        html += '<td><span class="id">' + escapeHTML(r.anonymous_id) + '</span></td>';
         html += '<td><span class="badge ' + badgeClass + '">' + deviceLabel + '</span></td>';
         html += '<td>' + time + '</td>';
         html += '</tr>';
@@ -193,7 +199,7 @@ td .id { font-family:monospace; color:var(--accent); font-size:.82rem; }
       document.getElementById('tableArea').innerHTML = html;
     } catch(e) {
       document.getElementById('tableArea').innerHTML =
-        '<div class="empty"><p style="color:#e0556a;">加载失败：' + e.message + '</p></div>';
+        '<div class="empty"><p style="color:#e0556a;">加载失败：' + e.message + '<br>请确认已在 Supabase 运行了 migration.sql</p></div>';
     }
   };
 
