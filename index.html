@@ -670,6 +670,9 @@ loadData();
 showStep(0);
 
 // ── Expose public API ──
+window.nextStep = nextStep;
+window.prevStep = prevStep;
+window.doGenerate = doGenerate;
 window.O = {
   save: saveData,
   copyReport: copyReport,
