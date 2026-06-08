@@ -297,7 +297,6 @@ input[type=range]::-moz-range-thumb { width:22px; height:22px;
 
 // ── Constants ──
 var DATA_KEY = 'odyssey_data_v2';
-var ANON_ID_KEY = 'odyssey_anon';
 var SUPABASE_TABLE = 'https://eeuvrabunfvsaxgpaiub.supabase.co/rest/v1/odyssey_submissions';
 var SUPABASE_KEY = 'sb_publishable_fETyamK-jikojdIg9QwcJw__06jEb7A';
 var TOTAL_STEPS = 5;
@@ -341,13 +340,6 @@ function $(id) { return document.getElementById(id); }
 function val(id) { var el=$(id); return el ? (el.value||'').trim() : ''; }
 
 // ── Tracking helpers ──
-function getAnonId() {
-  try {
-    var id = localStorage.getItem(ANON_ID_KEY);
-    if (!id) { id = 'u_' + Math.random().toString(36).slice(2, 10); localStorage.setItem(ANON_ID_KEY, id); }
-    return id;
-  } catch(e) { return 'u_unknown'; }
-}
 function detectDevice() {
   if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'mobile';
   return 'desktop';
@@ -356,11 +348,10 @@ function submitSubmission() {
   if (_submitted) return;
   _submitted = true;
   try {
-    var payload = { anonymous_id: getAnonId(), device: detectDevice() };
     fetch(SUPABASE_TABLE, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ device: detectDevice() })
     });
   } catch(e) {}
 }
@@ -634,16 +625,29 @@ function doGenerate() {
   // First step
   report += '<div class="report-section"><h3>👣 现在，第一步</h3>'+firstStep+'</div>';
 
-  // Summary
-  report += '<div class="report-section"><h3>📝 关键回答摘要</h3>';
-  report += '<p style="font-size:.83rem;line-height:1.8;">';
-  report += '<strong>行业/岗位：</strong>'+escapeHTML(val('industry'))+' / '+escapeHTML(val('role'))+'<br>';
-  report += '<strong>核心能力：</strong>'+escapeHTML(val('skills'))+'<br>';
-  report += '<strong>偷偷想做的：</strong>'+escapeHTML(val('secretDream'))+'<br>';
-  report += '<strong>约束：</strong>'+escapeHTML(val('constraints'))+'<br>';
-  report += '<strong>现状极致：</strong>'+escapeHTML(val('diagQ2'))+'<br>';
-  report += '<strong>行业消失：</strong>'+escapeHTML(val('diagQ3'))+'<br>';
-  report += '<strong>完全自由：</strong>'+escapeHTML(val('diagQ4'))+'</p></div>';
+  // Next steps to break down
+  report += '<div class="report-section"><h3>🔨 下一步待拆解</h3>';
+  report += '<p style="font-size:.85rem;line-height:1.8;">';
+  report += '1. <strong>信息补全</strong>：你对目标路径还缺什么信息？列出 3 个"不知道"，本周内逐一查。<br>';
+  report += '2. <strong>小成本实验</strong>：在不动主业的情况下，你最低成本能试什么？（约人聊、发内容、做样品、副业接一单……）<br>';
+  report += '3. <strong>时间锚点</strong>：3 个月后你希望自己在这条路上有什么信号？6 个月呢？写下，设日历提醒。<br>';
+  var road = winner === 'A' ? '确定之后在主线 vs 副线之间定一个"切换信号"——什么条件成立就从现在路线转向备用路线。' : '同时守住主业的安全感和探索方向的自由度，不需要立刻二选一。';
+  report += '4. <strong>切换判断</strong>：'+road;
+  report += '</p></div>';
+
+  // Strategy transitions
+  var ranked2 = ranked[1];
+  var secondName = ranked2==='A'?'极致当下':ranked2==='B'?'平行迁移':'疯狂版本';
+  report += '<div class="report-section"><h3>🔄 最终策略：不同阶段的过渡</h3>';
+  report += '<p style="font-size:.85rem;line-height:1.85;">';
+  report += '你的首选是 <strong style="color:var(--accent);">'+winnerName+'</strong>（'+scores[winner]+' 分），次选是 <strong>'+secondName+'</strong>（'+scores[ranked2]+' 分）。<br><br>';
+  report += '<strong>阶段一（现在 ~ 6 个月）</strong><br>';
+  report += '以首选方向为锚，用最低成本获取信息增量。不要辞职、不要投大钱——先"看见"真实画面。约行业内的人聊、做一次最小可行尝试、记录自己在这方向上的真实感受。如果 6 个月后热情不减，进入阶段二。<br><br>';
+  report += '<strong>阶段二（6 ~ 18 个月）</strong><br>';
+  report += '在首选方向上建立第一个"可展示的结果"——一个案例、一个产品、一段经历。同时用次选方向作为对冲，每周固定一小块时间探索。两个方向并行推进，直到其中一个给出更强信号。<br><br>';
+  report += '<strong>阶段三（18 个月 ~ 5 年）</strong><br>';
+  report += '基于前两个阶段的真实反馈做出选择：全力押注一个方向，还是用"主线 + 副线"的混合模式持续进化。到这个阶段，你不再需要"推演"——你已经有了自己的答案。';
+  report += '</p></div>';
 
   // Actions
   report += '<div class="btn-group" style="margin-top:8px;">';
