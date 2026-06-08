@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奥德赛计划 · 数据看板</title>
+<style>
+:root {
+  --bg: #0b0f1a;
+  --card: #131a2e;
+  --border: #1e2d4a;
+  --text: #e2e6f0;
+  --text-dim: #8b95ad;
+  --accent: #d4a853;
+  --green: #4ec9a0;
+  --blue: #5b8def;
+  --radius: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+  background-image: radial-gradient(ellipse at 50% -20%, rgba(212,168,83,0.06) 0%, transparent 70%);
+}
+.container { max-width:800px; margin:0 auto; padding:32px 20px 60px; }
+h1 { font-size:1.5rem; font-weight:800; margin-bottom:4px; }
+.subtitle { color:var(--text-dim); font-size:.85rem; margin-bottom:28px; }
+
+/* Password */
+.pwd-wrap { max-width:360px; margin:80px auto; text-align:center; }
+.pwd-wrap input { width:100%; padding:12px 16px; background:#0d1120; border:1px solid var(--border);
+  border-radius:8px; color:var(--text); font-size:.95rem; text-align:center; font-family:inherit; }
+.pwd-wrap input:focus { outline:none; border-color:var(--accent); }
+.pwd-wrap .btn { margin-top:12px; }
+.pwd-wrap .err { color:#e0556a; font-size:.82rem; margin-top:8px; display:none; }
+
+/* Stats */
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:24px; text-align:center; }
+.stat-num { font-size:2.2rem; font-weight:800; }
+.stat-card:nth-child(1) .stat-num { color:var(--accent); }
+.stat-card:nth-child(2) .stat-num { color:var(--green); }
+.stat-card:nth-child(3) .stat-num { color:var(--blue); }
+.stat-label { color:var(--text-dim); font-size:.78rem; margin-top:4px; }
+
+/* Table */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+.card h3 { font-size:1rem; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; font-size:.85rem; }
+th, td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+th { color:var(--text-dim); font-weight:600; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+td .id { font-family:monospace; color:var(--accent); font-size:.82rem; }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+.badge-mobile { background:rgba(91,141,239,0.15); color:var(--blue); }
+.badge-desktop { background:rgba(78,201,160,0.15); color:var(--green); }
+
+/* Buttons */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:10px 24px; border-radius:8px;
+  font-size:.9rem; font-weight:700; cursor:pointer; border:none; font-family:inherit; }
+.btn-primary { background:var(--accent); color:#1a1a1a; }
+.btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-sm { padding:6px 14px; font-size:.78rem; }
+
+/* Top bar */
+.top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.last-updated { color:var(--text-dim); font-size:.75rem; }
+.refresh-hint { color:var(--text-dim); font-size:.72rem; text-align:center; margin-top:20px; }
+
+.empty { text-align:center; color:var(--text-dim); padding:40px 0; }
+.empty-icon { font-size:3rem; margin-bottom:12px; }
+
+@media (max-width:600px) {
+  .stats { grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .stat-card { padding:16px 8px; }
+  .stat-num { font-size:1.6rem; }
+  table { font-size:.72rem; }
+  th, td { padding:8px 6px; }
+  .container { padding:20px 12px 40px; }
+}
+</style>
+</head>
+<body>
+
+<div class="pwd-wrap" id="pwdGate">
+  <h1>🔐 数据看板</h1>
+  <p style="color:var(--text-dim);margin:8px 0 24px;">请输入管理密码</p>
+  <input type="password" id="pwdInput" placeholder="输入密码后按回车" onkeydown="if(event.key==='Enter')unlock()">
+  <button class="btn btn-primary" onclick="unlock()">进入</button>
+  <p class="err" id="pwdErr">密码错误</p>
+</div>
+
+<div class="container" id="dashboard" style="display:none;">
+  <div class="top-bar">
+    <div>
+      <h1>🗺️ 奥德赛计划 · 数据看板</h1>
+      <p class="subtitle" style="margin-bottom:0;">匿名提交统计 · 不记录任何个人信息</p>
+    </div>
+    <button class="btn btn-sm btn-secondary" onclick="refresh()">🔄 刷新</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="totalCount">0</div>
+      <div class="stat-label">总推演人数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="mobileCount">0</div>
+      <div class="stat-label">📱 手机提交</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="desktopCount">0</div>
+      <div class="stat-label">💻 电脑提交</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📋 提交记录（最新50条）</h3>
+    <div id="tableArea"></div>
+  </div>
+
+  <p class="refresh-hint">每 30 秒自动刷新 · <span class="last-updated" id="lastUpdated"></span></p>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var URL = 'https://eeuvrabunfvsaxgpaiub.supabase.co/rest/v1/odyssey_submissions';
+  var KEY = 'sb_publishable_fETyamK-jikojdIg9QwcJw__06jEb7A';
+  var PWD_KEY = 'odyssey_admin_pwd';
+
+  function getPassword() {
+    try { return localStorage.getItem(PWD_KEY) || 'odyssey2026'; }
+    catch(e) { return 'odyssey2026'; }
+  }
+
+  window.unlock = function() {
+    var input = document.getElementById('pwdInput');
+    var err = document.getElementById('pwdErr');
+    if (input.value.trim() === getPassword()) {
+      localStorage.setItem(PWD_KEY, input.value.trim());
+      document.getElementById('pwdGate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      refresh();
+      setInterval(refresh, 30000);
+    } else {
+      err.style.display = 'block';
+    }
+  };
+
+  window.refresh = async function() {
+    try {
+      var headers = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
+      var res = await fetch(URL + '?select=*&order=created_at.desc&limit=50', { headers: headers });
+      if (!res.ok) throw new Error(res.status);
+      var rows = await res.json();
+
+      var total = rows.length;
+      var mobile = rows.filter(function(r) { return r.device === 'mobile'; }).length;
+      var desktop = rows.filter(function(r) { return r.device === 'desktop'; }).length;
+
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('mobileCount').textContent = mobile;
+      document.getElementById('desktopCount').textContent = desktop;
+
+      var now = new Date();
+      document.getElementById('lastUpdated').textContent =
+        '最后更新：' + now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      if (rows.length === 0) {
+        document.getElementById('tableArea').innerHTML =
+          '<div class="empty"><div class="empty-icon">📭</div><p>还没有人提交推演报告</p></div>';
+        return;
+      }
+
+      var html = '<table><thead><tr><th>#</th><th>匿名 ID</th><th>设备</th><th>时间</th></tr></thead><tbody>';
+      rows.forEach(function(r, i) {
+        var time = new Date(r.created_at).toLocaleString('zh-CN', {
+          month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit'
+        });
+        var badgeClass = r.device === 'mobile' ? 'badge-mobile' : 'badge-desktop';
+        var deviceLabel = r.device === 'mobile' ? '📱 手机' : '💻 电脑';
+        html += '<tr>';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td><span class="id">' + escapeHTML(r.anonymous_id) + '</span></td>';
+        html += '<td><span class="badge ' + badgeClass + '">' + deviceLabel + '</span></td>';
+        html += '<td>' + time + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('tableArea').innerHTML = html;
+    } catch(e) {
+      document.getElementById('tableArea').innerHTML =
+        '<div class="empty"><p style="color:#e0556a;">加载失败：' + e.message + '</p></div>';
+    }
+  };
+
+  function escapeHTML(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Auto-check if already unlocked
+  try {
+    var pwd = localStorage.getItem(PWD_KEY);
+    if (pwd && pwd === getPassword() && document.getElementById('pwdGate')) {
+      document.getElementById('pwdGate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      refresh();
+      setInterval(refresh, 30000);
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>

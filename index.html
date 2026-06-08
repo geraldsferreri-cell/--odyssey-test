@@ -297,8 +297,12 @@ input[type=range]::-moz-range-thumb { width:22px; height:22px;
 
 // ── Constants ──
 var DATA_KEY = 'odyssey_data_v2';
+var ANON_ID_KEY = 'odyssey_anon';
+var SUPABASE_TABLE = 'https://eeuvrabunfvsaxgpaiub.supabase.co/rest/v1/odyssey_submissions';
+var SUPABASE_KEY = 'sb_publishable_fETyamK-jikojdIg9QwcJw__06jEb7A';
 var TOTAL_STEPS = 5;
 var currentStep = 0;
+var _submitted = false;
 
 var DIMS = [
   { key:'feasibility', label:'资源可行性', weight:10, hint:'以你现在条件，多久能跑通？' },
@@ -335,6 +339,31 @@ var SKILL_MAP = {
 // ── DOM helpers ──
 function $(id) { return document.getElementById(id); }
 function val(id) { var el=$(id); return el ? (el.value||'').trim() : ''; }
+
+// ── Tracking helpers ──
+function getAnonId() {
+  try {
+    var id = localStorage.getItem(ANON_ID_KEY);
+    if (!id) { id = 'u_' + Math.random().toString(36).slice(2, 10); localStorage.setItem(ANON_ID_KEY, id); }
+    return id;
+  } catch(e) { return 'u_unknown'; }
+}
+function detectDevice() {
+  if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'mobile';
+  return 'desktop';
+}
+function submitSubmission() {
+  if (_submitted) return;
+  _submitted = true;
+  try {
+    var payload = { anonymous_id: getAnonId(), device: detectDevice() };
+    fetch(SUPABASE_TABLE, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload)
+    });
+  } catch(e) {}
+}
 
 // ── Persistence ──
 function saveData() {
@@ -627,6 +656,7 @@ function doGenerate() {
   report += '</div>';
 
   $('reportArea').innerHTML = report;
+  submitSubmission();
   $('reportArea').scrollIntoView({behavior:'smooth'});
 }
 
