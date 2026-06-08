@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奥德赛计划 · 人生推演五问</title>
+<style>
+:root {
+  --bg: #0b0f1a;
+  --card: #131a2e;
+  --border: #1e2d4a;
+  --text: #e2e6f0;
+  --text-dim: #8b95ad;
+  --accent: #d4a853;
+  --accent-glow: rgba(212,168,83,0.18);
+  --blue: #5b8def;
+  --green: #4ec9a0;
+  --red: #e0556a;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; }
+body {
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; line-height:1.7;
+  background-image: radial-gradient(ellipse at 50% -20%, rgba(212,168,83,0.06) 0%, transparent 70%),
+                    radial-gradient(ellipse at 80% 80%, rgba(91,141,239,0.04) 0%, transparent 50%);
+}
+.container { max-width:720px; margin:0 auto; padding:24px 20px 60px; }
+
+/* Progress */
+.progress-wrap { position:sticky; top:0; z-index:100; background:var(--bg); padding:16px 0 8px; }
+.progress-steps { display:flex; justify-content:space-between; position:relative; margin-bottom:6px; }
+.progress-steps::before { content:''; position:absolute; top:14px; left:0; right:0; height:2px; background:var(--border); z-index:0; }
+.progress-fill { position:absolute; top:14px; left:0; height:2px; background:var(--accent); z-index:1; transition:width .5s ease; }
+.step-dot { width:30px; height:30px; border-radius:50%; background:var(--card); border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  color:var(--text-dim); position:relative; z-index:2; transition:all .4s; flex-shrink:0; }
+.step-dot.active { border-color:var(--accent); background:var(--accent); color:#1a1a1a; box-shadow:0 0 16px var(--accent-glow); }
+.step-dot.done { border-color:var(--green); background:var(--green); color:#0b0f1a; }
+.step-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); }
+.step-labels span { text-align:center; width:30px; }
+
+/* Card */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:36px 32px; margin-top:12px; }
+.card h2 { font-size:1.6rem; font-weight:800; margin-bottom:6px; }
+.card h3 { font-size:1.15rem; font-weight:700; margin:24px 0 10px; color:var(--accent); }
+.card .subtitle { color:var(--text-dim); font-size:.9rem; margin-bottom:28px; }
+
+/* Form */
+label { display:block; font-weight:600; font-size:.88rem; margin-bottom:5px; }
+input, textarea, select { width:100%; padding:12px 15px; background:#0d1120; border:1px solid var(--border);
+  border-radius:var(--radius-sm); color:var(--text); font-size:.92rem; font-family:inherit; transition:border-color .25s; resize:vertical; }
+input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+textarea { min-height:90px; }
+.form-group { margin-bottom:20px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.hint { font-size:.78rem; color:var(--text-dim); margin-top:4px; }
+
+/* Buttons */
+.btn { display:inline-flex; align-items:center; gap:8px; padding:12px 28px; border-radius:var(--radius-sm);
+  font-size:.95rem; font-weight:700; cursor:pointer; border:none; transition:all .25s; font-family:inherit; }
+.btn-primary { background:var(--accent); color:#1a1a1a; }
+.btn-primary:hover { box-shadow:0 4px 24px var(--accent-glow); transform:translateY(-1px); }
+.btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+.btn-blue { background:var(--blue); color:#fff; }
+.btn-blue:hover { box-shadow:0 4px 24px rgba(91,141,239,0.2); transform:translateY(-1px); }
+.btn-sm { padding:8px 18px; font-size:.82rem; }
+.btn-group { display:flex; gap:12px; margin-top:28px; flex-wrap:wrap; }
+
+/* Path cards */
+.path-card { background:#0d1120; border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; margin-bottom:16px; }
+.path-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:800; letter-spacing:.05em; margin-bottom:10px; }
+.path-badge.a { background:rgba(91,141,239,0.2); color:var(--blue); }
+.path-badge.b { background:rgba(78,201,160,0.2); color:var(--green); }
+.path-badge.c { background:rgba(212,168,83,0.2); color:var(--accent); }
+.path-card h4 { font-size:1rem; font-weight:700; margin-bottom:4px; }
+.path-gen { color:var(--text-dim); font-size:.82rem; line-height:1.55; }
+.path-gen strong { color:var(--text); }
+.highlight { color:var(--accent); font-weight:600; }
+
+/* Slider */
+.slider-group { margin:18px 0; }
+.slider-label { display:flex; justify-content:space-between; font-size:.85rem; }
+input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px;
+  background:var(--border); outline:none; margin:8px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px;
+  border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--bg); }
+input[type=range]::-moz-range-thumb { width:22px; height:22px;
+  border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--bg); }
+.slider-val { font-weight:800; color:var(--accent); font-size:1.1rem; }
+
+/* Score table */
+.score-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:.85rem; }
+.score-table th, .score-table td { padding:10px 12px; text-align:center; border-bottom:1px solid var(--border); }
+.score-table th { color:var(--text-dim); font-weight:600; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+.score-table th:first-child, .score-table td:first-child { text-align:left; }
+.score-table .winner { color:var(--accent); font-weight:800; }
+.score-table .total-row { font-weight:800; border-top:2px solid var(--accent); }
+.score-table .total-row td { padding-top:14px; }
+
+/* Report */
+.report-section { margin:28px 0; padding:20px; background:#0d1120; border-radius:var(--radius-sm); border:1px solid var(--border); }
+.report-section h3 { margin-top:0; font-size:1rem; }
+.mirror-result { display:flex; gap:14px; align-items:flex-start; padding:14px; border-radius:var(--radius-sm); }
+.mirror-result.conflict { background:rgba(224,85,106,0.08); border:1px solid rgba(224,85,106,0.2); }
+.mirror-result.align { background:rgba(78,201,160,0.08); border:1px solid rgba(78,201,160,0.2); }
+.mirror-icon { font-size:1.6rem; flex-shrink:0; }
+
+.tag { display:inline-block; padding:4px 10px; border-radius:14px; font-size:.72rem; font-weight:700; margin:3px 4px; }
+.tag-gold { background:rgba(212,168,83,0.15); color:var(--accent); }
+.tag-blue { background:rgba(91,141,239,0.15); color:var(--blue); }
+.tag-green { background:rgba(78,201,160,0.15); color:var(--green); }
+
+/* Animations */
+@keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.animate-in { animation:fadeInUp .45s ease both; }
+.step-hidden { display:none; }
+
+@media print {
+  body { background:#fff; color:#000; font-size:12px; }
+  .card { border:1px solid #ddd; box-shadow:none; }
+  .btn, .progress-wrap, #step-0 .btn-group { display:none !important; }
+  .container { max-width:100%; }
+}
+@media (max-width:600px) {
+  .card { padding:24px 18px; }
+  .card h2 { font-size:1.3rem; }
+  .form-row { grid-template-columns:1fr; }
+  .btn-group { flex-direction:column; }
+  .btn { width:100%; justify-content:center; }
+  .score-table { font-size:.72rem; }
+  .score-table th, .score-table td { padding:6px 4px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    <div class="step-dot active" id="dot0">0</div>
+    <div class="step-dot" id="dot1">1</div>
+    <div class="step-dot" id="dot2">2</div>
+    <div class="step-dot" id="dot3">3</div>
+    <div class="step-dot" id="dot4">4</div>
+    <div class="step-dot" id="dot5">5</div>
+  </div>
+  <div class="step-labels"><span>开始</span><span>画像</span><span>渴望</span><span>路径</span><span>诊断</span><span>结果</span></div>
+</div>
+
+<!-- ====== STEP 0 ====== -->
+<div class="card animate-in" id="step-0">
+  <h2>🗺️ 奥德赛计划</h2>
+  <p class="subtitle">五组问题 · 三条路径 · 一次深度人生推演</p>
+  <p style="margin-bottom:12px;line-height:1.7;">
+    这不是性格测试，不是职业测评。这是从斯坦福大学《Designing Your Life》奥德赛计划改编的<strong>「认知拆墙」程序</strong>。
+  </p>
+  <p style="margin-bottom:18px;color:var(--text-dim);line-height:1.7;">
+    五组层层递进的问题，每一问专门拆除一种自我欺骗——从"我以为只有一条路"到"其实我早就知道答案，只是不敢认"。
+  </p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <span class="tag tag-gold">约 15-20 分钟</span>
+    <span class="tag tag-blue">手机可用</span>
+    <span class="tag tag-green">进度自动保存</span>
+    <span class="tag tag-gold">结果可复制/打印</span>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="nextStep()">开始推演 →</button>
+  </div>
+</div>
+
+<!-- ====== STEP 1 ====== -->
+<div class="card step-hidden" id="step-1">
+  <h2>① 现在的你</h2>
+  <p class="subtitle">越具体，推演越准。不讲空话。</p>
+  <div class="form-row">
+    <div class="form-group"><label>你在什么行业？</label><input type="text" id="industry" placeholder="如 MCN、互联网、教育…"></div>
+    <div class="form-group"><label>岗位 / 角色</label><input type="text" id="role" placeholder="如 BP、产品经理…"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>工作几年了？</label><input type="text" id="expYears" placeholder="如 3 年 / 刚入职 5 个月"></div>
+    <div class="form-group"><label>什么职级？</label><input type="text" id="level" placeholder="如 专员 / 主管 / 经理"></div>
+  </div>
+  <div class="form-group"><label>最核心的 3-5 个能力（靠什么吃饭）</label><textarea id="skills" placeholder="如：内容创作、团队管理、数据分析…每行一个"></textarea></div>
+  <div class="form-group"><label>现在的工作，你喜欢吗？</label><textarea id="jobLike" placeholder="诚实回答——不是"不讨厌"，是真的喜欢吗？"></textarea></div>
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="prevStep()">← 上一步</button>
+    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+  </div>
+</div>
+
+<!-- ====== STEP 2 ====== -->
+<div class="card step-hidden" id="step-2">
+  <h2>② 你的另一面</h2>
+  <p class="subtitle">工作之外，你是什么样的人？</p>
+  <div class="form-group"><label>工作之外花时间最多的事</label><textarea id="hobbies" placeholder="如：跳舞、读书、运动、陪家人…"></textarea></div>
+  <div class="form-group"><label>有没有"偷偷想做的事"？</label><textarea id="secretDream" placeholder="从来没跟同事说过的那种"></textarea></div>
+  <div class="form-group"><label>目前有副业吗？</label><textarea id="sideHustle" placeholder="如实写，没有就写"无""></textarea></div>
+  <div class="form-group"><label>一直想试试但没行动的方向？为什么没动？</label><textarea id="untried" placeholder="想试什么 + 卡在哪"></textarea></div>
+  <div class="form-group"><label>现实约束是什么？</label><textarea id="constraints" placeholder="如：有房贷 / 存款能撑半年 / 要照顾家人…"></textarea></div>
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="prevStep()">← 上一步</button>
+    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+  </div>
+</div>
+
+<!-- ====== STEP 3 ====== -->
+<div class="card step-hidden" id="step-3">
+  <h2>③ 三条完全不同的人生路径</h2>
+  <p class="subtitle">不是选一条，是看见——你至少有三条路都走得通。</p>
+
+  <div class="path-card">
+    <span class="path-badge a">路径A · 极致当下</span>
+    <h4>把现在的赛道跑到尽头</h4>
+    <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:8px;">系统根据你的行业自动推演，请修改成你自己的版本。</p>
+    <div class="path-gen" id="pathAGen"></div>
+    <textarea id="pathAText" style="margin-top:10px;min-height:110px;" placeholder="修改或重写：5年后的你是什么样？职位？收入？能力？不讲空话！"></textarea>
+  </div>
+
+  <div class="path-card">
+    <span class="path-badge b">路径B · 平行迁移</span>
+    <h4>同样的能力，换个战场</h4>
+    <div class="path-gen" id="pathBGen"></div>
+    <textarea id="pathBText" style="margin-top:10px;min-height:110px;" placeholder="修改或重写：能力换个行业能做什么？5年后什么样？"></textarea>
+  </div>
+
+  <div class="path-card">
+    <span class="path-badge c">路径C · 疯狂版本</span>
+    <h4>如果没人看你、不缺钱——你想干嘛？</h4>
+    <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:8px;">这是离你真实自我最近的路。把你偷偷想过的版本写下来。</p>
+    <textarea id="pathCText" style="min-height:130px;" placeholder="写：在哪里、做什么、和谁、客户是谁。不要写"自由职业"，写具体画面。"></textarea>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="prevStep()">← 上一步</button>
+    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+  </div>
+</div>
+
+<!-- ====== STEP 4 ====== -->
+<div class="card step-hidden" id="step-4">
+  <h2>④ 深度诊断三问</h2>
+  <p class="subtitle">每问在逼你面对一种自我欺骗。</p>
+
+  <div class="form-group">
+    <label style="font-size:.95rem;">🔍 如果我不改变现状，只是把现有的事做到极致，5年后我会是什么样？不讲空话！</label>
+    <p class="hint">逼你面对：你是真的想换方向，还是只是在逃避当下的困难？</p>
+    <textarea id="diagQ2" style="min-height:100px;" placeholder="具体描述：职位？收入？能力？"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label style="font-size:.95rem;">⚠️ 如果我现在的行业明天突然消失了，利用现有技能，我可以做什么完全不同的事？</label>
+    <p class="hint">逼你：把"我是做XX的"身份标签，和"我能做什么"的真实能力剥离开。</p>
+    <textarea id="diagQ3" style="min-height:100px;" placeholder="列出可迁移能力，对应到新行业/新角色"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label style="font-size:.95rem;">💭 如果我完全不缺钱，也不在乎任何人的眼光，我会过什么样的人生？</label>
+    <p class="hint" style="color:var(--accent);">整场推演的灵魂。不要写"躺平"——写你主动会去做的事。</p>
+    <textarea id="diagQ4" style="min-height:120px;" placeholder="写下画面：在哪里、做什么、和谁、日子怎么过。越具体越好。"></textarea>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="prevStep()">← 上一步</button>
+    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+  </div>
+</div>
+
+<!-- ====== STEP 5 ====== -->
+<div class="card step-hidden" id="step-5">
+  <h2>⑤ 评估 + 打分</h2>
+  <p class="subtitle">最后一问：给每条路径打分，找到你的真正排序。</p>
+  <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:20px;">每个维度 1-10 分，拖动滑块。权重已预设。</p>
+
+  <div style="margin-bottom:24px;" id="scoreInputs"></div>
+
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="prevStep()">← 上一步</button>
+    <button class="btn btn-primary" onclick="doGenerate()">✨ 生成推演报告</button>
+  </div>
+
+  <div id="reportArea" style="margin-top:36px;"></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+"use strict";
+
+// ── Constants ──
+var DATA_KEY = 'odyssey_data_v2';
+var TOTAL_STEPS = 5;
+var currentStep = 0;
+
+var DIMS = [
+  { key:'feasibility', label:'资源可行性', weight:10, hint:'以你现在条件，多久能跑通？' },
+  { key:'desire', label:'内心渴望度', weight:30, hint:'做这件事本身让你快乐吗？' },
+  { key:'satisfaction', label:'5年满足感', weight:25, hint:'5年后回头看，会觉得值吗？' },
+  { key:'failure', label:'失败可承受度', weight:20, hint:'万一没成，损失你能扛吗？' },
+  { key:'surprise', label:'意外惊喜可能', weight:15, hint:'会不会碰到意想不到的机会？' }
+];
+
+var TEMPLATES = {
+  mcn: { name:'MCN/新媒体', ladder:['内容专员','运营主管','内容经理','运营总监/内容VP'], desc:'管账号矩阵 + 管人 + 管流程，从执行到策略全线打通' },
+  internet: { name:'互联网/科技', ladder:['执行层','Team Lead','部门经理','业务线负责人/总监'], desc:'从负责单一模块到负责整条业务线的完整闭环' },
+  traditional: { name:'传统行业', ladder:['业务骨干','部门主管','区域/部门经理','副总经理/事业部负责人'], desc:'深耕行业认知+管理半径扩大，成为不可替代的业务中枢' },
+  freelance: { name:'自由职业/个体', ladder:['接单生存','建立口碑','提价筛客','个人品牌/工作室主理人'], desc:'从卖时间到卖品牌，客单价和选择权同步提升' },
+  student: { name:'学生/应届', ladder:['入职适应','独立负责','带新人/项目','部门核心/跳槽升级'], desc:'快速积累可迁移能力，建立行业认知和个人品牌' },
+  default: { name:'通用', ladder:['独当一面','带团队/项目','部门负责人','高管/合伙人'], desc:'从个人贡献者到组织建设者' }
+};
+
+var SKILL_MAP = {
+  '内容':'品牌内容策划 / 自媒体运营 / 电商内容营销',
+  '管理':'中小企业运营负责人 / 团队教练 / 项目管理',
+  '销售':'toB/toC 行业客户拓展',
+  '数据':'商业分析 / 增长运营 / 数据产品',
+  '编程':'技术顾问 / SaaS创业 / 技术培训',
+  '设计':'品牌设计 / UI/UX顾问 / 独立工作室',
+  '写作':'内容策略 / 出版 / 知识付费',
+  '沟通':'商务拓展 / 公关 / 用户研究',
+  '运营':'增长负责人 / COO / 业务顾问',
+  '视频':'品牌视频内容 / IP孵化 / 课程制作',
+  '人力':'组织发展顾问 / HR负责人 / 猎头',
+  '教育':'课程设计 / 企业培训 / 知识付费'
+};
+
+// ── DOM helpers ──
+function $(id) { return document.getElementById(id); }
+function val(id) { var el=$(id); return el ? (el.value||'').trim() : ''; }
+
+// ── Persistence ──
+function saveData() {
+  try {
+    var data = {};
+    var inputs = document.querySelectorAll('input[type=text], textarea');
+    for (var i=0; i<inputs.length; i++) {
+      var el = inputs[i];
+      if (el.id) data[el.id] = el.value;
+    }
+    // scores
+    var scores = {};
+    ['A','B','C'].forEach(function(path) {
+      scores[path] = {};
+      DIMS.forEach(function(d) {
+        var el = $('score_'+path+'_'+d.key);
+        if (el) scores[path][d.key] = parseInt(el.value) || 5;
+      });
+    });
+    data._scores = scores;
+    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadData() {
+  try {
+    var raw = localStorage.getItem(DATA_KEY);
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    Object.keys(data).forEach(function(id) {
+      if (id === '_scores') return;
+      var el = $(id);
+      if (el && !el.value) el.value = data[id];
+    });
+    if (data._scores) {
+      Object.keys(data._scores).forEach(function(path) {
+        var dims = data._scores[path];
+        Object.keys(dims).forEach(function(dim) {
+          var el = $('score_'+path+'_'+dim);
+          if (el) el.value = dims[dim];
+          var disp = $('score_'+path+'_'+dim+'_val');
+          if (disp) disp.textContent = dims[dim];
+        });
+      });
+    }
+  } catch(e) {}
+}
+
+// ── Navigation ──
+function showStep(n) {
+  currentStep = n;
+  for (var i=0; i<=TOTAL_STEPS; i++) {
+    var el = $('step-'+i);
+    if (el) { el.classList.add('step-hidden'); el.classList.remove('animate-in'); }
+  }
+  var cur = $('step-'+n);
+  if (cur) { cur.classList.remove('step-hidden'); cur.classList.add('animate-in'); }
+
+  // Progress bar
+  var pct = (n / TOTAL_STEPS) * 100;
+  $('progressFill').style.width = pct + '%';
+  for (var j=0; j<=TOTAL_STEPS; j++) {
+    var dot = $('dot'+j);
+    if (dot) {
+      dot.classList.remove('active','done');
+      if (j < n) dot.classList.add('done');
+      if (j === n) dot.classList.add('active');
+    }
+  }
+
+  window.scrollTo(0, 0);
+}
+
+function nextStep() {
+  saveData();
+  if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+  if (currentStep === 3) genPaths();
+  if (currentStep === 5) buildScores();
+}
+
+function prevStep() {
+  saveData();
+  if (currentStep > 0) showStep(currentStep - 1);
+}
+
+// ── Industry detection ──
+function detectIndustry() {
+  var ind = val('industry').toLowerCase();
+  if (ind.indexOf('mcn')!==-1 || ind.indexOf('新媒体')!==-1 || ind.indexOf('短视频')!==-1) return 'mcn';
+  if (ind.indexOf('互联网')!==-1 || ind.indexOf('科技')!==-1 || ind.indexOf('软件')!==-1) return 'internet';
+  if (ind.indexOf('自由')!==-1 || ind.indexOf('个体')!==-1) return 'freelance';
+  if (ind.indexOf('学生')!==-1 || ind.indexOf('在校')!==-1) return 'student';
+  if (ind.indexOf('制造')!==-1||ind.indexOf('零售')!==-1||ind.indexOf('金融')!==-1||ind.indexOf('教育')!==-1||ind.indexOf('医疗')!==-1) return 'traditional';
+  return 'default';
+}
+
+// ── Path generation ──
+function genPaths() {
+  var industry = val('industry') || '你的行业';
+  var role = val('role') || '当前岗位';
+  var skillsRaw = val('skills');
+  var skills = skillsRaw ? skillsRaw.split(/[\n,，、]/).filter(function(s){return s.trim()}).slice(0,5) : [];
+  var t = TEMPLATES[detectIndustry()];
+
+  // Path A
+  var htmlA = '<p><span class="highlight">行业模板：'+t.name+'</span></p>';
+  htmlA += '<p><strong>5年阶梯：</strong>'+role+' &rarr; '+t.ladder.join(' &rarr; ')+'</p>';
+  htmlA += '<p><strong>核心打法：</strong>'+t.desc+'</p>';
+  htmlA += '<p><strong>5年后画像：</strong>年薪行业同龄 top 20%，在 <em>'+industry+'</em> 圈内有"能打"口碑，至少 3 个标杆案例。</p>';
+  $('pathAGen').innerHTML = htmlA;
+
+  // Path B
+  var htmlB = '<p><strong>你的可迁移能力包：</strong></p><p>';
+  if (skills.length > 0) {
+    var found = 0;
+    Object.keys(SKILL_MAP).forEach(function(k) {
+      for (var i=0; i<skills.length; i++) {
+        if (skills[i].indexOf(k)!==-1) {
+          htmlB += SKILL_MAP[k] + '<br>';
+          found++;
+          break;
+        }
+      }
+    });
+    if (found === 0) htmlB += '基于「'+skills.join('、')+'」——这些能力可以迁移到任何需要它们的行业。';
+  } else {
+    htmlB += '请回到第一步填写核心能力，这里会自动生成迁移建议。';
+  }
+  htmlB += '</p>';
+  $('pathBGen').innerHTML = htmlB;
+
+  // Path C hint
+  var dream = val('secretDream');
+  if (dream && !val('pathCText')) {
+    $('pathCText').placeholder = '你写过：'+dream.slice(0,50)+'——展开写5年后的具体画面。';
+  }
+}
+
+// ── Score UI ──
+function buildScores() {
+  var container = $('scoreInputs');
+  if (!container) return;
+  var html = '';
+  var names = {A:'极致当下',B:'平行迁移',C:'疯狂版本'};
+  var colors = {A:'var(--blue)',B:'var(--green)',C:'var(--accent)'};
+
+  ['A','B','C'].forEach(function(path) {
+    html += '<h3 style="color:'+colors[path]+';margin-top:20px;">路径'+path+'：'+names[path]+'</h3>';
+    DIMS.forEach(function(d) {
+      html += '<div class="slider-group">';
+      html += '<div class="slider-label"><span>'+d.label+' <span style="color:var(--text-dim);font-weight:400;font-size:.75rem;">(权重 '+d.weight+'%)</span></span><span class="slider-val" id="score_'+path+'_'+d.key+'_val">5</span></div>';
+      html += '<input type="range" min="1" max="10" value="5" id="score_'+path+'_'+d.key+'" oninput="var d=document.getElementById(\'score_'+path+'_'+d.key+'_val\');if(d)d.textContent=this.value;O.save();">';
+      html += '<div class="hint">'+d.hint+'</div>';
+      html += '</div>';
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+// ── Report ──
+function doGenerate() {
+  saveData();
+  var data = JSON.parse(localStorage.getItem(DATA_KEY) || '{}');
+
+  // Calculate weighted scores
+  function calc(path) {
+    var total = 0;
+    DIMS.forEach(function(d) {
+      var v = (data._scores && data._scores[path] && data._scores[path][d.key]) ? parseInt(data._scores[path][d.key]) : 5;
+      total += v * d.weight / 100;
+    });
+    return Math.round(total * 100) / 100;
+  }
+
+  var scores = {A:calc('A'), B:calc('B'), C:calc('C')};
+  var ranked = Object.keys(scores).sort(function(a,b){return scores[b]-scores[a];});
+  var winner = ranked[0];
+  var winnerName = winner==='A'?'极致当下':winner==='B'?'平行迁移':'疯狂版本';
+  var winEmoji = winner==='A'?'🅰️':winner==='B'?'🅱️':'🅲';
+
+  // Mirror analysis
+  var q2 = (data.diagQ2||'').toLowerCase();
+  var q4 = (data.diagQ4||'').toLowerCase();
+
+  var posKW = ['喜欢','热爱','快乐','幸福','自由','享受','期待','梦想','创造','有趣','满足','充实'];
+  var negKW = ['不得不','没办法','无聊','疲惫','压力','焦虑','害怕','担心','做不到','不可能'];
+  var q2p=0,q2n=0,q4p=0,q4n=0;
+  posKW.forEach(function(k){if(q2.indexOf(k)!==-1)q2p++;if(q4.indexOf(k)!==-1)q4p++;});
+  negKW.forEach(function(k){if(q2.indexOf(k)!==-1)q2n++;if(q4.indexOf(k)!==-1)q4n++;});
+
+  // Character overlap (Chinese chars only)
+  var getChars = function(s){var r={};s.replace(/[一-鿿]/g,function(c){r[c]=1});return r;};
+  var c2=getChars(q2), c4=getChars(q4);
+  var overlap=0,total=0;
+  for(var k in c2){total++;if(c4[k])overlap++;}
+  for(var kk in c4){if(!c2[kk])total++;}
+  var overlapRate = total>0 ? overlap/total : 0;
+
+  var isConflict = overlapRate < 0.25 || (q2n > q2p && q4p > q4n);
+  var isAligned = overlapRate > 0.45 && (q2p >= q2n && q4p >= q4n);
+
+  var diagnosis = '';
+  if (isConflict) {
+    diagnosis = '🔴 <strong>剧烈矛盾</strong>：你目前在违背自己的内心。"现状做到极致"和"完全自由的渴望"是两个完全不同的方向。你不是不知道想做什么——你是不敢觉得它能养活你。';
+  } else if (isAligned) {
+    diagnosis = '🟢 <strong>方向一致</strong>：你已经在正确的路上。当下积累和内心渴望高度重合，差的不再是方向，而是时间或勇气。';
+  } else {
+    diagnosis = '🟡 <strong>部分交叉</strong>：当下路径和渴望方向有重叠但不够多。建议阶段接力——把当下作为攒资本的阶段，业余朝渴望方向种种子。';
+  }
+
+  // First step
+  var firstStep = '';
+  var dream = (data.secretDream||'').slice(0,30);
+  if (winner === 'C' && dream) {
+    firstStep = '<p><strong>🎯 第一步：</strong>这周内，用最低成本朝「'+dream+'」迈出一步。不是辞职，不是投钱——是获得<em>信息增量</em>。</p><p>发布一条相关内容、约懂行的人喝咖啡、花一小时研究供应链——选一个<strong>小到不可能失败</strong>的动作，本周内完成。</p>';
+  } else if (winner === 'A') {
+    firstStep = '<p><strong>🎯 第一步：</strong>找出当前岗位最被需要但没人愿做的一件事，主动接手并做到超出预期。同时业余时间接触路径C——万一将来想切，已有地基。</p>';
+  } else {
+    firstStep = '<p><strong>🎯 第一步：</strong>列出你最值钱的3个能力，花一周调研哪3个完全不同的行业正为这些能力付高溢价。约一个在那行业里的人聊天。</p>';
+  }
+
+  // Build report HTML
+  var report = '';
+  report += '<div style="border-top:2px solid var(--accent);padding-top:24px;margin-top:8px;">';
+  report += '<h2 style="font-size:1.4rem;">📋 你的奥德赛推演报告</h2>';
+  report += '<p style="color:var(--text-dim);margin-bottom:20px;">生成时间：'+new Date().toLocaleString('zh-CN')+'</p>';
+
+  // Score table
+  report += '<div class="report-section"><h3>📊 路径评分</h3>';
+  report += '<table class="score-table"><tr><th>维度（权重）</th><th>🅰️ 极致当下</th><th>🅱️ 平行迁移</th><th>🅲 疯狂版本</th></tr>';
+  DIMS.forEach(function(d){
+    report += '<tr><td>'+d.label+'（'+d.weight+'%）</td>';
+    ['A','B','C'].forEach(function(p){
+      var sv = (data._scores&&data._scores[p]&&data._scores[p][d.key]) ? data._scores[p][d.key] : 5;
+      report += '<td>'+sv+'</td>';
+    });
+    report += '</tr>';
+  });
+  report += '<tr class="total-row"><td>加权总分</td>';
+  ['A','B','C'].forEach(function(p){
+    var cls = winner===p?'winner':'';
+    report += '<td class="'+cls+'">'+scores[p]+'</td>';
+  });
+  report += '</tr></table>';
+  report += '<p style="text-align:center;font-size:1.1rem;margin-top:12px;">🏆 最心动方向：<strong style="color:var(--accent);">'+winEmoji+' '+winnerName+'</strong>（'+scores[winner]+' 分）</p>';
+  report += '</div>';
+
+  // Mirror
+  var mirrorClass = isConflict?'conflict':'align';
+  var mirrorEmoji = isConflict?'🔴':'🟢';
+  var mirrorTitle = isConflict?'剧烈矛盾 — 当前在违背自己':'基本对齐 — 方向是对的';
+  report += '<div class="report-section"><h3>🪞 镜像对抗诊断</h3>';
+  report += '<div class="mirror-result '+mirrorClass+'"><div class="mirror-icon">'+mirrorEmoji+'</div><div>';
+  report += '<p style="font-weight:700;margin-bottom:4px;">'+mirrorTitle+'</p>';
+  report += '<p style="font-size:.85rem;color:var(--text-dim);">关键词重叠度：'+Math.round(overlapRate*100)+'%<br>';
+  report += '现状极致情绪：积极 '+q2p+' / 消极 '+q2n+' &nbsp;|&nbsp; 完全自由情绪：积极 '+q4p+' / 消极 '+q4n+'</p>';
+  report += '</div></div><p style="margin-top:10px;">'+diagnosis+'</p></div>';
+
+  // Gap analysis
+  var gap = Math.round((scores[ranked[0]] - scores[ranked[2]])*100)/100;
+  report += '<div class="report-section"><h3>🔍 路径差距分析</h3>';
+  report += '<p>排名第一与最后差距 <strong>'+gap+' 分</strong>。</p>';
+  report += '<p style="font-size:.85rem;color:var(--text-dim);">';
+  report += gap > 3 ? '差距很大——不是纠结，是方向性偏离。你心里早就知道答案。' : '差距不大——两条路都有道理，用阶段接力策略并行推进。';
+  report += '</p></div>';
+
+  // First step
+  report += '<div class="report-section"><h3>👣 现在，第一步</h3>'+firstStep+'</div>';
+
+  // Summary
+  report += '<div class="report-section"><h3>📝 关键回答摘要</h3>';
+  report += '<p style="font-size:.83rem;line-height:1.8;">';
+  report += '<strong>行业/岗位：</strong>'+escapeHTML(val('industry'))+' / '+escapeHTML(val('role'))+'<br>';
+  report += '<strong>核心能力：</strong>'+escapeHTML(val('skills'))+'<br>';
+  report += '<strong>偷偷想做的：</strong>'+escapeHTML(val('secretDream'))+'<br>';
+  report += '<strong>约束：</strong>'+escapeHTML(val('constraints'))+'<br>';
+  report += '<strong>现状极致：</strong>'+escapeHTML(val('diagQ2'))+'<br>';
+  report += '<strong>行业消失：</strong>'+escapeHTML(val('diagQ3'))+'<br>';
+  report += '<strong>完全自由：</strong>'+escapeHTML(val('diagQ4'))+'</p></div>';
+
+  // Actions
+  report += '<div class="btn-group" style="margin-top:8px;">';
+  report += '<button class="btn btn-blue btn-sm" onclick="O.copyReport()">📋 复制报告</button>';
+  report += '<button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ 打印 / 导出PDF</button>';
+  report += '<button class="btn btn-secondary btn-sm" onclick="O.reset()">🔄 重新开始</button></div>';
+
+  var nextDate = new Date(Date.now()+365*24*60*60*1000).toISOString().slice(0,10);
+  report += '<p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-top:24px;">建议每年同一天重新推演，与本次报告对比。下次建议：<strong>'+nextDate+'</strong></p>';
+  report += '</div>';
+
+  $('reportArea').innerHTML = report;
+  $('reportArea').scrollIntoView({behavior:'smooth'});
+}
+
+function escapeHTML(s) {
+  if (!s) return '（未填）';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyReport() {
+  var text = $('reportArea').innerText;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){alert('✅ 报告已复制到剪贴板！');}).catch(fallback);
+  } else { fallback(); }
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('✅ 报告已复制！');
+  }
+}
+
+function resetAll() {
+  if (confirm('确定重新开始？当前数据将被清除。')) {
+    localStorage.removeItem(DATA_KEY);
+    location.reload();
+  }
+}
+
+// ── Auto-save ──
+var saveTimer;
+document.addEventListener('input', function(e) {
+  if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveData, 600);
+  }
+  if (e.target.type === 'range') saveData();
+});
+
+// ── Init ──
+loadData();
+showStep(0);
+
+// ── Expose public API ──
+window.O = {
+  save: saveData,
+  copyReport: copyReport,
+  reset: resetAll
+};
+
+})();
+</script>
+
+</body>
+</html>
